@@ -10,7 +10,6 @@ class GrassmannianFusion:
     Omega: np.ndarray
     r: int
     lamb: float
-    weight_factor: float
     step_size: float
     g_threshold: float
     bound_zero: float
@@ -30,7 +29,6 @@ class GrassmannianFusion:
                                 Omega = self.Omega,
                                 r = self.r,
                                 lamb = self.lamb,
-                                weight_factor = self.weight_factor,
                                 g_threshold = self.g_threshold,
                                 bound_zero = self.bound_zero,
                                 singular_value_bound = self.singular_value_bound,
@@ -48,7 +46,6 @@ class GrassmannianFusion:
                 Omega = data['Omega'],
                 r = data['r'],
                 lamb = data['lamb'],
-                weight_factor = data['weight_factor'],
                 g_threshold = data['g_threshold'],
                 bound_zero = data['bound_zero'],
                 singular_value_bound = data['singular_value_bound'],
@@ -62,7 +59,6 @@ class GrassmannianFusion:
 
     #U_array load version
     def __init__(self, X, Omega, r, lamb,
-                weight_factor = 1,
                 g_threshold = 0.15,
                 bound_zero = 1e-10,
                 singular_value_bound = 1e-2,
@@ -75,7 +71,6 @@ class GrassmannianFusion:
         self.Omega = Omega
         self.r = r
         self.lamb = lamb
-        self.weight_factor = weight_factor
         self.g_threshold = g_threshold
         self.bound_zero = bound_zero
         self.singular_value_bound = singular_value_bound
@@ -99,10 +94,11 @@ class GrassmannianFusion:
         print('########### GrassmannianFusion Initialization END ###########\n')
 
     def get_U_array(self):
-        return self.U_array.copy()
+        return self.U_array
 
     def load_U_array(self, U_array):
-        self.U_array = U_array.copy()
+        # del self.U_array
+        self.U_array = U_array
 
     def change_lambda(lamb: float):
         self.lamb = lamb
@@ -156,12 +152,12 @@ class GrassmannianFusion:
                                                         sigma = 1e-5)
 
             new_np_U_array = np.empty((self.n, self.m, self.r))
-            if iter % 1 == 0: ## projects back to the grassmannian after (1) iterations
-                for i in range(self.n):
-                    u,s,vt = np.linalg.svd(new_U_array[i], full_matrices= False)
-                    new_np_U_array[i,:,:] = u@vt
 
-            assert np.linalg.norm(new_np_U_array[i].T @ new_np_U_array[i] - np.identity(new_np_U_array[i].shape[1])) < self.U_manifold_bound
+            for i in range(self.n):
+                u,s,vt = np.linalg.svd(new_U_array[i], full_matrices= False)
+                new_np_U_array[i,:,:] = u@vt
+
+            # assert np.linalg.norm(new_np_U_array[i].T @ new_np_U_array[i] - np.identity(new_np_U_array[i].shape[1])) < self.U_manifold_bound
             self.load_U_array(new_np_U_array)
 
             #record
@@ -190,23 +186,21 @@ class GrassmannianFusion:
         # Chordal Distance
         chordal_distances, chordal_gradients = compute_chordal_distances(self.X0, U_array, require_grad)
 
-        # Compute weights
-        w, w_gradients = compute_weights(chordal_distances, self.weight_factor, chordal_gradients = chordal_gradients, require_grad = require_grad)
-
         # Geodesic Distance
         geodesic_distances, geodesic_gradients = compute_geodesic_distances(U_array, require_grad)
 
         # Compute objective function
-        obj = np.sum(chordal_distances.diagonal()) + self.lamb / 2 * np.sum(w * geodesic_distances)
+        # obj = np.sum(chordal_distances.diagonal()) + self.lamb / 2 * np.sum(w * geodesic_distances)
+        obj = np.sum(chordal_distances.diagonal()) + self.lamb / 2 * np.sum(geodesic_distances)
 
         if require_grad:
-            return obj, {'chordal_dist':chordal_distances, 'geodesic_distances': geodesic_distances, 'w':w,
-                        'chordal_gradients': chordal_gradients, 'geodesic_gradients':geodesic_gradients, 'w_gradients': w_gradients}
+            return obj, {'chordal_dist':chordal_distances, 'geodesic_distances': geodesic_distances,
+                        'chordal_gradients': chordal_gradients, 'geodesic_gradients':geodesic_gradients}
         else:
             return obj
 
 
-    def compute_gradients_and_norm(self, chordal_gradients, w, w_gradients, geodesic_distances, geodesic_gradients):
+    def compute_gradients_and_norm(self, chordal_gradients, geodesic_distances, geodesic_gradients):
         grad_f_array = []
         identity_m = np.identity(self.m)
 
@@ -218,8 +212,7 @@ class GrassmannianFusion:
 
             # Accumulate gradients
             for j in range(self.n):
-                dg_UU = U_proj[i] @ (w[i][j] * geodesic_gradients[i][j] + w_gradients[j][i] * geodesic_distances[i][j])
-                grad_f_i += self.lamb / 2 * dg_UU
+                grad_f_i += self.lamb / 2 * geodesic_gradients[i][j]
 
             # Apply projection
             grad_f_i = U_proj[i] @ grad_f_i
@@ -238,16 +231,14 @@ class GrassmannianFusion:
         obj, info = self.cal_obj(self.U_array, require_grad = True)
         chordal_dist = info['chordal_dist']
         geodesic_distances = info['geodesic_distances']
-        w = info['w']
         chordal_gradients = info['chordal_gradients']
         geodesic_gradients = info['geodesic_gradients']
-        w_gradients = info['w_gradients']
 
 
-        grad_f_array, gradient_norm = self.compute_gradients_and_norm(chordal_gradients, w, w_gradients, geodesic_distances, geodesic_gradients)
+        grad_f_array, gradient_norm = self.compute_gradients_and_norm(chordal_gradients, geodesic_distances, geodesic_gradients)
 
         arm_m = 0
-        constant_term_L = np.sum(chordal_dist.diagonal()) + self.lamb / 2 * np.sum(w * geodesic_distances)
+        constant_term_L = np.sum(chordal_dist.diagonal()) + self.lamb / 2 * np.sum( geodesic_distances)
         grad_norm_squared = np.sum([np.trace(g.T @ g) for g in grad_f_array])
 
         while True:

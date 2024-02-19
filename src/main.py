@@ -22,10 +22,10 @@ def convert_distance_to_similarity(d_matrix):
 def main(args):
 
     if args.dataset ==  'Synthetic':
-        m = 50 #100-300
-        n = 50 #100-300
+        m = 100 #100-300
+        n = 100 #100-300
         r = 3 #3-5
-        K = 3
+        K = 2
         init_params = (m,n,r,K,args.missing_rate)
         #all-in-one init function
         X_omega, labels, Omega, info = initialize_X_with_missing(init_params)
@@ -38,7 +38,6 @@ def main(args):
                             Omega = Omega,
                             r = r,
                             lamb = args.lambda_in,
-                            weight_factor = args.weight_f_in,
                             g_threshold= 1e-6,
                             bound_zero = 1e-10,
                             singular_value_bound = 1e-5,
@@ -67,7 +66,6 @@ if __name__ == '__main__':
 
     # Add arguments
     parser.add_argument('--lambda_in', type=float, default=1, help='Lambda value (default: 1)')
-    parser.add_argument('--weight_f_in', type=float, default=1, help='Weight factor (default: 1)')
     parser.add_argument('--missing_rate', type=float, default=0, help='missing_rate (default: 1)')
     parser.add_argument('--max_iter', type=int, default=50, help='Maximum number of iterations (default: 50)')
     parser.add_argument('--dataset', type=str, default='Synthetic', help='Dataset name (default: Synthetic)')
