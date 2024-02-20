@@ -1,9 +1,15 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+import os
 
 from itertools import permutations
 from scipy.optimize import linear_sum_assignment
+
+from sklearn.cluster import SpectralClustering
+from sklearn.cluster import KMeans
+from sklearn.cluster import DBSCAN
+from sklearn import metrics
 
 # def dUU(U_1, U_2, r):
 #   u,s,vt = np.linalg.svd(U_1.T @ U_2)
@@ -67,6 +73,18 @@ def dUU(U_1, U_2, r):
 #
 # import numpy as np
 
+def spectral_clustering(similarity_matrix, number_clusters, labels):
+    K = number_clusters
+    # Perform Spectral Clustering
+    sc = SpectralClustering(n_clusters=K, affinity='precomputed', random_state=0)
+    clusters = sc.fit_predict(similarity_matrix)
+    accuracy =  1 - evaluate(clusters, labels , K)
+    # Assuming you have true labels in a variable `true_labels`
+    rand_score = metrics.rand_score(labels, clusters)
+    adjusted_rand_score = metrics.adjusted_rand_score(labels, clusters)
+
+    return clusters, {"accuracy": accuracy, "rand_score": rand_score, "adjusted_rand_score": adjusted_rand_score}
+
 def evaluate(predict, truth, cluster):
     predict = np.array(predict)
     truth = np.array(truth)
@@ -85,3 +103,23 @@ def evaluate(predict, truth, cluster):
     err = error_count / len(predict)
 
     return err
+
+
+def plot_distance(d_matrix, labels, mlf_logger):
+    # Sort the labels and get the sorted indices
+    sorted_indices = np.argsort(labels)
+    # Sort rows and columns of the matrix
+    sorted_matrix = d_matrix[sorted_indices, :][:, sorted_indices]
+    plt.figure(figsize=(10, 10))
+    plt.imshow(sorted_matrix, cmap='hot', interpolation='nearest')
+    plt.colorbar()
+    plt.title("Heatmap of Sorted Matrix")
+    plt_name = 'Distance Matrix.png'
+    plt.savefig(plt_name)
+
+    # Log the image with MLFlowLogger
+    mlf_logger.experiment.log_artifact(local_path = plt_name, run_id = mlf_logger.run_id)
+
+    plt.close()
+
+    os.remove(plt_name)

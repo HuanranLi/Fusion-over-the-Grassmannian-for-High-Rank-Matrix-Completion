@@ -8,7 +8,16 @@ from sklearn.cluster import SpectralClustering
 from sklearn.cluster import KMeans
 from sklearn.cluster import DBSCAN
 import argparse
+from PIL import Image
+import io
+
+from pytorch_lightning.loggers import MLFlowLogger
 import seaborn as sns
+
+from sklearn import metrics
+from helper_functions import *
+
+
 
 def convert_distance_to_similarity(d_matrix):
     # Convert distance matrix to similarity matrix using Gaussian kernel
@@ -18,20 +27,23 @@ def convert_distance_to_similarity(d_matrix):
     return similarity_matrix
 
 
-
-def main(args):
+def main(args, run_idx = 0):
+    # Logging the hyperparams
+    mlf_logger = MLFlowLogger(experiment_name=args.experiment_name, run_name = f"run_{run_idx}", save_dir = '../logs')
+    mlf_logger.log_hyperparams(args)
 
     if args.dataset ==  'Synthetic':
         m = 100 #100-300
         n = 100 #100-300
         r = 3 #3-5
         K = 2
-        init_params = (m,n,r,K,args.missing_rate)
         #all-in-one init function
-        X_omega, labels, Omega, info = initialize_X_with_missing(init_params)
+        X_omega, labels, Omega, info = initialize_X_with_missing(m,n,r,K,args.missing_rate)
+    else:
+        raise ValueError(f"dataset {dataset} is not implemented!")
 
-
-        print('Paramter: lambda = ',args.lambda_in,', K = ',K,', m = ', m, ', n = ',n,', r = ',r,', missing_rate =', args.missing_rate)
+    mlf_logger.log_hyperparams({'m':m, 'n':n, 'r':r, 'K': K})
+    print('Paramter: lambda = ',args.lambda_in,', K = ',K,', m = ', m, ', n = ',n,', r = ',r,', missing_rate =', args.missing_rate)
 
     #object init
     GF = GrassmannianFusion(X = X_omega,
@@ -45,17 +57,14 @@ def main(args):
                             U_manifold_bound = 1e-5)
 
 
-    GF.train(max_iter = args.max_iter, step_size = args.step_size)
+    GF.train(max_iter = args.max_iter, step_size = args.step_size, logger = mlf_logger, step_method = args.step_method)
     d_matrix = GF.distance_matrix()
     similarity_matrix = convert_distance_to_similarity(d_matrix)
+    pred_labels, metrics = spectral_clustering(similarity_matrix, K, labels)
 
-
-    # Perform Spectral Clustering
-    sc = SpectralClustering(n_clusters=K, affinity='precomputed', random_state=0)
-    clusters = sc.fit_predict(similarity_matrix)
-
-    print(clusters)
-    print('SC Accuracy:' , 1 - evaluate(clusters, labels , K))
+    print(metrics)
+    mlf_logger.log_metrics((metrics))
+    plot_distance(d_matrix, labels, mlf_logger)
 
 
 
@@ -65,7 +74,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Parameter settings for training')
 
     # Add arguments
-    parser.add_argument('--lambda_in', type=float, default=1, help='Lambda value (default: 1)')
+    parser.add_argument('--experiment_name', type=str, default='test', help='experiment_name')
+    parser.add_argument('--num_rums', type=int, default=1, help='number of runs')
+    parser.add_argument('--step_method', type=str, default='Armijo', help='step_method')
+    parser.add_argument('--lambda_in', type=float, default=1e-5, help='Lambda value (default: 1)')
     parser.add_argument('--missing_rate', type=float, default=0, help='missing_rate (default: 1)')
     parser.add_argument('--max_iter', type=int, default=50, help='Maximum number of iterations (default: 50)')
     parser.add_argument('--dataset', type=str, default='Synthetic', help='Dataset name (default: Synthetic)')
@@ -74,4 +86,5 @@ if __name__ == '__main__':
     # Parse the arguments
     args = parser.parse_args()
 
-    main(args)
+    for run_idx in range(args.num_rums):
+        main(args, run_idx)

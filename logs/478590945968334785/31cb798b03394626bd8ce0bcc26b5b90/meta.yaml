@@ -1,0 +1,16 @@
+artifact_uri: file:///Users/hli488/Documents/GitHub/GrassmannianFusionV2/src/../logs/478590945968334785/31cb798b03394626bd8ce0bcc26b5b90/artifacts
+deleted_time: 1708377159059
+end_time: null
+entry_point_name: ''
+experiment_id: '478590945968334785'
+lifecycle_stage: deleted
+run_id: 31cb798b03394626bd8ce0bcc26b5b90
+run_name: SSL
+run_uuid: 31cb798b03394626bd8ce0bcc26b5b90
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1708376487057
+status: 1
+tags: []
+user_id: hli488

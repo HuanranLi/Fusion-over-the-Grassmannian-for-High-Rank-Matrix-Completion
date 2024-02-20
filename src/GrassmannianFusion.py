@@ -5,6 +5,8 @@ from helper_functions import dUU
 import os
 from distances import *
 
+from pytorch_lightning.loggers import MLFlowLogger
+
 class GrassmannianFusion:
     X: np.ndarray
     Omega: np.ndarray
@@ -138,32 +140,45 @@ class GrassmannianFusion:
                 self.X0[i][row_index, col_index+1] = 1
 
 
-    def train(self, max_iter:int, step_size:float):
+    def train(self, max_iter:int, step_size:float, logger, step_method = 'Armijo'):
         obj_record = []
         gradient_record = []
         start_time = time.time()
+        obj = 99999
 
         print('\n################ Training Process Begin ################')
         #main algo
         for iter in range(max_iter):
+            # print(step_method)
 
-            new_U_array, end, gradient_norm = self.Armijo_step(alpha = step_size,
+            if step_method == 'Armijo':
+                new_U_array, end, gradient_norm = self.Armijo_step(alpha = step_size,
                                                         beta = 0.5,
                                                         sigma = 1e-5)
+            elif step_method == 'Regular':
+                new_U_array, end, gradient_norm = self.regurlar_step(step_size = step_size)
+            else:
+                raise ValueError(f'step_method {step_method} is not implemented!')
 
             new_np_U_array = np.empty((self.n, self.m, self.r))
-
             for i in range(self.n):
                 u,s,vt = np.linalg.svd(new_U_array[i], full_matrices= False)
                 new_np_U_array[i,:,:] = u@vt
 
-            # assert np.linalg.norm(new_np_U_array[i].T @ new_np_U_array[i] - np.identity(new_np_U_array[i].shape[1])) < self.U_manifold_bound
-            self.load_U_array(new_np_U_array)
+
+            new_obj = self.cal_obj(new_np_U_array)
+            if new_obj > obj:
+                step_size = step_size / 2
+                print(f'Decrease step size to {step_size} at iteration {iter}')
+            else:
+                self.load_U_array(new_np_U_array)
+                obj = new_obj
 
             #record
-            obj = self.cal_obj(self.U_array)
             obj_record.append(obj)
             gradient_record.append(gradient_norm)
+
+            logger.log_metrics(({"training_loss": obj, "grad norm": gradient_norm}), step=iter)
 
             #print log
             if iter % 10 == 0:
@@ -226,6 +241,7 @@ class GrassmannianFusion:
 
 
     def Armijo_step(self, alpha = 1, beta = 0.5, sigma = 0.9):
+        # print('Armijo_step')
         L = R = 0
 
         obj, info = self.cal_obj(self.U_array, require_grad = True)
@@ -265,6 +281,31 @@ class GrassmannianFusion:
                     return self.U_array, True, gradient_norm
 
             arm_m += 1
+
+    def regurlar_step(self, step_size):
+        # print(step_size)
+
+        obj, info = self.cal_obj(self.U_array, require_grad = True)
+        chordal_dist = info['chordal_dist']
+        geodesic_distances = info['geodesic_distances']
+        chordal_gradients = info['chordal_gradients']
+        geodesic_gradients = info['geodesic_gradients']
+
+
+        grad_f_array, gradient_norm = self.compute_gradients_and_norm(chordal_gradients, geodesic_distances, geodesic_gradients)
+
+
+        new_U_array = []
+
+        for i in range(self.n):
+            # Compute new U using the Armijo step
+            Gamma_i, Del_i, ET_i = np.linalg.svd(-step_size * grad_f_array[i], full_matrices=False)
+            first_term = np.concatenate((self.U_array[i] @ ET_i.T, Gamma_i), axis=1)
+            second_term = np.concatenate((np.diag(np.cos(Del_i)), np.sin(np.diag(Del_i))), axis=0)
+            new_U_array.append(first_term @ second_term @ ET_i)
+
+        return  new_U_array, False, gradient_norm
+
 
 
     def distance_matrix(self):
