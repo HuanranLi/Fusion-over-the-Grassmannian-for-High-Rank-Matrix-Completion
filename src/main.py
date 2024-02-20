@@ -12,7 +12,6 @@ from PIL import Image
 import io
 
 from pytorch_lightning.loggers import MLFlowLogger
-import seaborn as sns
 
 from sklearn import metrics
 from helper_functions import *
