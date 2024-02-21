@@ -76,7 +76,7 @@ if __name__ == '__main__':
     parser.add_argument('--experiment_name', type=str, default='test', help='experiment_name')
     parser.add_argument('--num_rums', type=int, default=1, help='number of runs')
     parser.add_argument('--step_method', type=str, default='Armijo', help='step_method')
-    parser.add_argument('--lambda_in', type=float, default=1e-5, help='Lambda value (default: 1)')
+    parser.add_argument('--lambda_in', type=float, default=1e-5, help='Lambda value (default: 1e-5)')
     parser.add_argument('--missing_rate', type=float, default=0, help='missing_rate (default: 1)')
     parser.add_argument('--max_iter', type=int, default=50, help='Maximum number of iterations (default: 50)')
     parser.add_argument('--dataset', type=str, default='Synthetic', help='Dataset name (default: Synthetic)')
