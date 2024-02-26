@@ -66,6 +66,7 @@ class GrassmannianFusion:
                 singular_value_bound = 1e-2,
                 g_column_norm_bound = 1e-5,
                 U_manifold_bound = 1e-2,
+                callbacks = [],
                 **optional_params):
 
         print('\n########### GrassmannianFusion Initialization Start ###########')
@@ -78,6 +79,7 @@ class GrassmannianFusion:
         self.singular_value_bound = singular_value_bound
         self.g_column_norm_bound = g_column_norm_bound
         self.U_manifold_bound = U_manifold_bound
+        self.callbacks = callbacks
 
         self.m = X.shape[0]
         self.n = X.shape[1]
@@ -141,14 +143,14 @@ class GrassmannianFusion:
 
 
     def train(self, max_iter:int, step_size:float, logger, step_method = 'Armijo'):
-        obj_record = []
-        gradient_record = []
         start_time = time.time()
         obj = 99999
+        self.logger = logger
 
         print('\n################ Training Process Begin ################')
         #main algo
         for iter in range(max_iter):
+            self.iter = iter
             # print(step_method)
 
             if step_method == 'Armijo':
@@ -166,19 +168,17 @@ class GrassmannianFusion:
                 new_np_U_array[i,:,:] = u@vt
 
 
-            new_obj = self.cal_obj(new_np_U_array)
+            new_obj, new_objs_dict = self.cal_obj(new_np_U_array, separate_losses = True)
             if new_obj > obj:
                 step_size = step_size / 2
                 print(f'Decrease step size to {step_size} at iteration {iter}')
             else:
                 self.load_U_array(new_np_U_array)
                 obj = new_obj
-
-            #record
-            obj_record.append(obj)
-            gradient_record.append(gradient_norm)
+                objs_dict = new_objs_dict
 
             logger.log_metrics(({"training_loss": obj, "grad norm": gradient_norm}), step=iter)
+            logger.log_metrics((objs_dict), step=iter)
 
             #print log
             if iter % 10 == 0:
@@ -193,10 +193,13 @@ class GrassmannianFusion:
                 print('Final Obj value:', obj)
                 break
 
+            for custom_callback in self.callbacks:
+                custom_callback(self)
+
         print('################ Training Process END ################\n')
 
 
-    def cal_obj(self, U_array, require_grad = False):
+    def cal_obj(self, U_array, require_grad = False, separate_losses = False):
 
         # Chordal Distance
         chordal_distances, chordal_gradients = compute_chordal_distances(self.X0, U_array, require_grad)
@@ -206,11 +209,16 @@ class GrassmannianFusion:
 
         # Compute objective function
         # obj = np.sum(chordal_distances.diagonal()) + self.lamb / 2 * np.sum(w * geodesic_distances)
-        obj = np.sum(chordal_distances.diagonal()) + self.lamb / 2 * np.sum(geodesic_distances)
+        chordal_distances_sum = np.sum(chordal_distances.diagonal())
+        geodesic_distances_sum = np.sum(geodesic_distances)
+        obj = chordal_distances_sum + self.lamb / 2 * geodesic_distances_sum
+
 
         if require_grad:
             return obj, {'chordal_dist':chordal_distances, 'geodesic_distances': geodesic_distances,
                         'chordal_gradients': chordal_gradients, 'geodesic_gradients':geodesic_gradients}
+        elif separate_losses:
+            return obj, {'chordal_dist':chordal_distances_sum, 'geodesic_distances': self.lamb / 2 * geodesic_distances_sum}
         else:
             return obj
 

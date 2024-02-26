@@ -15,6 +15,7 @@ from pytorch_lightning.loggers import MLFlowLogger
 
 from sklearn import metrics
 from helper_functions import *
+from distances import *
 
 
 
@@ -26,10 +27,18 @@ def convert_distance_to_similarity(d_matrix):
     return similarity_matrix
 
 
+def distance_to_truth_callback(instance, truth_subspaces, labels):
+    distances = np.mean([geodesic(U, truth_subspaces[labels[i]]) for i,U in enumerate(instance.U_array)])
+    instance.logger.log_metrics(({'distance_to_truth_mean': distances}), step=instance.iter)
+
+
+
 def main(args, run_idx = 0):
     # Logging the hyperparams
-    mlf_logger = MLFlowLogger(experiment_name=args.experiment_name, run_name = f"run_{run_idx}", save_dir = '../logs')
+    run_name = args.run_name if args.run_name else f'run_{run_idx}'
+    mlf_logger = MLFlowLogger(experiment_name=args.experiment_name, run_name = run_name, save_dir = '../logs')
     mlf_logger.log_hyperparams(args)
+    callbacks = []
 
     if args.dataset ==  'Synthetic':
         m = 100 #100-300
@@ -44,6 +53,11 @@ def main(args, run_idx = 0):
     else:
         raise ValueError(f"dataset {dataset} is not implemented!")
 
+    if args.distance_to_truth:
+        callbacks.append(lambda instance: distance_to_truth_callback(instance, info['X_lowRank_array'], labels) )
+
+
+
     mlf_logger.log_hyperparams({'m':m, 'n':n, 'r':r, 'K': K})
     print('Paramter: lambda = ',args.lambda_in,', K = ',K,', m = ', m, ', n = ',n,', r = ',r,', missing_rate =', args.missing_rate)
 
@@ -56,7 +70,8 @@ def main(args, run_idx = 0):
                             bound_zero = 1e-10,
                             singular_value_bound = 1e-5,
                             g_column_norm_bound = 1e-5,
-                            U_manifold_bound = 1e-5)
+                            U_manifold_bound = 1e-5,
+                            callbacks = callbacks)
 
 
     GF.train(max_iter = args.max_iter, step_size = args.step_size, logger = mlf_logger, step_method = args.step_method)
@@ -78,6 +93,7 @@ if __name__ == '__main__':
     # Add arguments
     parser.add_argument('--experiment_name', type=str, default='test', help='experiment_name')
     parser.add_argument('--num_rums', type=int, default=1, help='number of runs')
+    parser.add_argument('--run_name', type=str, default=None, help='run_name')
     parser.add_argument('--step_method', type=str, default='Armijo', help='step_method')
     parser.add_argument('--lambda_in', type=float, default=1e-5, help='Lambda value (default: 1e-5)')
     parser.add_argument('--missing_rate', type=float, default=0, help='missing_rate (default: 1)')
@@ -86,6 +102,7 @@ if __name__ == '__main__':
     parser.add_argument('--step_size', type=float, default=1, help='Step size (default: 1)')
 
     parser.add_argument('--single_cluster', action='store_true', default=False)
+    parser.add_argument('--distance_to_truth', action='store_true', default=False)
 
 
 

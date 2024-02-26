@@ -63,3 +63,11 @@ def compute_geodesic_distances(U_array, require_grad=False):
                         geodesic_gradients[i][j] += -2 * np.outer(u_j[:, r_index] , vt_j[r_index, :]) # gradient w.r.t U_i
 
     return geodesic_distances, geodesic_gradients
+
+def geodesic(U1, U2):
+    r = U1.shape[1]
+    A = U2 @ U2.T @ U1
+    u_j, s_j, vt_j = np.linalg.svd(A)
+    s_j = np.clip(s_j, a_min=None, a_max=1)
+
+    return np.sum(np.arccos(s_j[:r])**2)
