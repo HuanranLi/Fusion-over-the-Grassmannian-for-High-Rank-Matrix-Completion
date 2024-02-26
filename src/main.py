@@ -36,6 +36,9 @@ def main(args, run_idx = 0):
         n = 100 #100-300
         r = 3 #3-5
         K = 2
+        if args.single_cluster:
+            K = 1
+            print('K = ', K)
         #all-in-one init function
         X_omega, labels, Omega, info = initialize_X_with_missing(m,n,r,K,args.missing_rate)
     else:
@@ -81,6 +84,10 @@ if __name__ == '__main__':
     parser.add_argument('--max_iter', type=int, default=50, help='Maximum number of iterations (default: 50)')
     parser.add_argument('--dataset', type=str, default='Synthetic', help='Dataset name (default: Synthetic)')
     parser.add_argument('--step_size', type=float, default=1, help='Step size (default: 1)')
+
+    parser.add_argument('--single_cluster', action='store_true', default=False)
+
+
 
     # Parse the arguments
     args = parser.parse_args()
