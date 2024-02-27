@@ -102,7 +102,7 @@ if __name__ == '__main__':
 
     # Add arguments
     parser.add_argument('--experiment_name', type=str, default='test', help='experiment_name')
-    parser.add_argument('--num_rums', type=int, default=1, help='number of runs')
+    parser.add_argument('--num_runs', type=int, default=1, help='number of runs')
     parser.add_argument('--run_name', type=str, default=None, help='run_name')
     parser.add_argument('--step_method', type=str, default='Armijo', help='step_method')
     parser.add_argument('--lambda_in', type=float, default=1e-5, help='Lambda value (default: 1e-5)')
