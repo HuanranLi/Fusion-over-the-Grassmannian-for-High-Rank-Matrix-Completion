@@ -121,5 +121,5 @@ if __name__ == '__main__':
     # Parse the arguments
     args = parser.parse_args()
 
-    for run_idx in range(args.num_rums):
+    for run_idx in range(args.num_runs):
         main(args, run_idx)
