@@ -58,3 +58,23 @@ def initialize_X_with_missing(m,n,r,K,missing_rate):
 
     info = {'X':X, 'masks': masks, 'X_lowRank_array': X_lowRank_array,  }
     return X_omega, labels, Omega, info
+
+
+
+def random_sampling(X, missing_rate):
+    m, n = X.shape
+
+    # Calculate the total number of elements and the number of elements to observe
+    total_elements = m * n
+    num_observed = int(total_elements * (1 - missing_rate))
+
+    # Randomly choose indices for observed elements
+    Omega = np.random.choice(total_elements, size=num_observed, replace=False)
+
+    # Create the sampled matrix
+    X_omega = np.zeros((m, n))
+    for idx in Omega:
+        row, col = divmod(idx, n)
+        X_omega[row, col] = X[row, col]
+
+    return X_omega, Omega

@@ -16,6 +16,7 @@ from pytorch_lightning.loggers import MLFlowLogger
 from sklearn import metrics
 from helper_functions import *
 from distances import *
+from MNIST import *
 
 
 
@@ -40,21 +41,30 @@ def main(args, run_idx = 0):
     mlf_logger.log_hyperparams(args)
     callbacks = []
 
+    K = args.num_cluster
+
     if args.dataset ==  'Synthetic':
         m = 100 #100-300
-        n = 100 #100-300
+        n = args.samples_per_class * args.num_cluster #100-300
         r = 3 #3-5
-        K = 2
-        if args.single_cluster:
-            K = 1
-            print('K = ', K)
-        #all-in-one init function
         X_omega, labels, Omega, info = initialize_X_with_missing(m,n,r,K,args.missing_rate)
+        true_subspaces = info['X_lowRank_array']
+    elif args.dataset == 'MNIST':
+        # Randomly select class indices
+        class_indices = np.random.choice(10, args.num_cluster, replace=False)
+
+        # Call the MNIST function
+        X, labels = MNIST(class_indices, args.samples_per_class)
+        X_omega, Omega = random_sampling(X, args.missing_rate)
+
+        r = 3
+        m, n = X.shape
+
     else:
         raise ValueError(f"dataset {dataset} is not implemented!")
 
     if args.distance_to_truth:
-        callbacks.append(lambda instance: distance_to_truth_callback(instance, info['X_lowRank_array'], labels) )
+        callbacks.append(lambda instance: distance_to_truth_callback(instance, true_subspaces, labels) )
 
 
 
@@ -101,8 +111,10 @@ if __name__ == '__main__':
     parser.add_argument('--dataset', type=str, default='Synthetic', help='Dataset name (default: Synthetic)')
     parser.add_argument('--step_size', type=float, default=1, help='Step size (default: 1)')
 
-    parser.add_argument('--single_cluster', action='store_true', default=False)
+    parser.add_argument('--num_cluster', type=int, default=2, help='number of clusters')
     parser.add_argument('--distance_to_truth', action='store_true', default=False)
+    parser.add_argument("--samples_per_class", type=int, default=50, help="Number of images per class")
+
 
 
 
