@@ -8,7 +8,12 @@ LOCAL_DIR="../logs"
 HOME_DIR=".."
 
 
-for i in {0..7}
+# Read the number of iterations from the remote file
+NUM_ITERATIONS=$(ssh "$USER@$HOST" "grep 'queue' $REMOTE_DIR/src/submit.sub | awk '{print \$2}'")
+echo "Detect Number of Iterations: $NUM_ITERATIONS"
+
+# Loop for the extracted number of iterations
+for i in $(seq 0 $((NUM_ITERATIONS - 1)))
 do
     FILE_NAME="${i}_logs.tar.gz"
     echo "Copying $FILE_NAME from $HOST"
