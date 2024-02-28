@@ -1,7 +1,5 @@
 from GrassmannianFusion import GrassmannianFusion
 from Initialization import *
-from helper_functions import evaluate
-
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.cluster import SpectralClustering
@@ -96,8 +94,9 @@ def main(args, run_idx = 0):
 
 
 if __name__ == '__main__':
+    print('Starting Main')
 
-        # Create the parser
+    # Create the parser
     parser = argparse.ArgumentParser(description='Parameter settings for training')
 
     # Add arguments
@@ -117,9 +116,9 @@ if __name__ == '__main__':
 
 
 
-
     # Parse the arguments
     args = parser.parse_args()
 
+    print('Finish Parsing args.')
     for run_idx in range(args.num_runs):
         main(args, run_idx)
