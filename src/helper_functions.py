@@ -1,5 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import time
 import os
 
@@ -86,9 +86,13 @@ def spectral_clustering(similarity_matrix, number_clusters, labels):
     return clusters, {"accuracy": accuracy, "rand_score": rand_score, "adjusted_rand_score": adjusted_rand_score}
 
 def evaluate(predict, truth, cluster):
-    predict = np.array(predict)
-    truth = np.array(truth)
+    predict = np.array(predict).astype(int)  # Convert to integer array
+    truth = np.array(truth).astype(int)      # Convert to integer array
     assert predict.shape == truth.shape
+
+    # Ensure all values are within the valid range
+    assert np.all((predict >= 0) & (predict < cluster))
+    assert np.all((truth >= 0) & (truth < cluster))
 
     # Create a confusion matrix
     C = np.zeros((cluster, cluster), dtype=int)
@@ -105,21 +109,21 @@ def evaluate(predict, truth, cluster):
     return err
 
 
-def plot_distance(d_matrix, labels, mlf_logger):
-    # Sort the labels and get the sorted indices
-    sorted_indices = np.argsort(labels)
-    # Sort rows and columns of the matrix
-    sorted_matrix = d_matrix[sorted_indices, :][:, sorted_indices]
-    plt.figure(figsize=(10, 10))
-    plt.imshow(sorted_matrix, cmap='hot', interpolation='nearest')
-    plt.colorbar()
-    plt.title("Heatmap of Sorted Matrix")
-    plt_name = 'Distance Matrix.png'
-    plt.savefig(plt_name)
-
-    # Log the image with MLFlowLogger
-    mlf_logger.experiment.log_artifact(local_path = plt_name, run_id = mlf_logger.run_id)
-
-    plt.close()
-
-    os.remove(plt_name)
+# def plot_distance(d_matrix, labels, mlf_logger):
+#     # Sort the labels and get the sorted indices
+#     sorted_indices = np.argsort(labels)
+#     # Sort rows and columns of the matrix
+#     sorted_matrix = d_matrix[sorted_indices, :][:, sorted_indices]
+#     plt.figure(figsize=(10, 10))
+#     plt.imshow(sorted_matrix, cmap='hot', interpolation='nearest')
+#     plt.colorbar()
+#     plt.title("Heatmap of Sorted Matrix")
+#     plt_name = 'Distance Matrix.png'
+#     plt.savefig(plt_name)
+#
+#     # Log the image with MLFlowLogger
+#     mlf_logger.experiment.log_artifact(local_path = plt_name, run_id = mlf_logger.run_id)
+#
+#     plt.close()
+#
+#     os.remove(plt_name)

@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 from torchvision import datasets, transforms
+import random
 
 def MNIST(classes, images_per_class):
     # Load MNIST dataset
@@ -9,15 +10,16 @@ def MNIST(classes, images_per_class):
 
     images_class_array = []
     labels_array = []
-    for classes_i in classes:
+    for i,classes_i in enumerate(classes):
         print('Sampling Class', classes_i)
         # Filter the dataset for two classes, e.g., classes 0 and 1
         class_0 = [data for data, target in mnist_dataset if target == classes_i]
+        random.shuffle(class_0)
 
         # Sample 100 images from each class
-        images_class_array.append( torch.stack(class_0[:100]) )
+        images_class_array.append( torch.stack(class_0[:images_per_class]) )
 
-        labels = np.ones(100) * classes_i
+        labels = np.ones(images_per_class) * i
         labels_array.append(labels)
 
 
