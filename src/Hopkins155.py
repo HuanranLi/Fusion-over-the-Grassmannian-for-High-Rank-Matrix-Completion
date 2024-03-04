@@ -56,7 +56,7 @@ def process_hopkins_sequence(hopkins_path, index):
 
     # Assuming there's one main .mat file per folder, find it
     for file in os.listdir(folder_path):
-        if file.endswith('.mat'):
+        if file.endswith('.mat') and not file.startswith('.'):
             file_path = os.path.join(folder_path, file)
             break
 
