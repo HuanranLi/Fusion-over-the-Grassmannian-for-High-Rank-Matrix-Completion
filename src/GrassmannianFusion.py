@@ -142,7 +142,8 @@ class GrassmannianFusion:
                 self.X0[i][row_index, col_index+1] = 1
 
 
-    def train(self, max_iter:int, step_size:float, logger, step_method = 'Armijo'):
+    def train(self, max_iter:int, step_size:float, logger, step_method = 'Armijo', multiprocessing = False):
+        self.multiprocessing = multiprocessing
         start_time = time.time()
         obj = 99999
         self.logger = logger
@@ -202,10 +203,10 @@ class GrassmannianFusion:
     def cal_obj(self, U_array, require_grad = False, separate_losses = False):
 
         # Chordal Distance
-        chordal_distances, chordal_gradients = compute_chordal_distances(self.X0, U_array, require_grad)
+        chordal_distances, chordal_gradients = compute_chordal_distances(self.X0, U_array, require_grad, multiprocessing = self.multiprocessing)
 
         # Geodesic Distance
-        geodesic_distances, geodesic_gradients = compute_geodesic_distances(U_array, require_grad)
+        geodesic_distances, geodesic_gradients = compute_geodesic_distances(U_array, require_grad, multiprocessing = self.multiprocessing)
 
         # Compute objective function
         # obj = np.sum(chordal_distances.diagonal()) + self.lamb / 2 * np.sum(w * geodesic_distances)

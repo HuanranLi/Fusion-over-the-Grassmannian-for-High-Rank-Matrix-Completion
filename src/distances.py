@@ -1,27 +1,80 @@
 import numpy as np
 
-def compute_chordal_distances(X0, U_array, require_grad=False):
+# def compute_chordal_distances(X0, U_array, require_grad=False):
+#     n = len(U_array)
+#     chordal_dist = np.zeros((n, n))
+#     chordal_gradients = np.empty((n, n), dtype=object) if require_grad else None
+#
+#     # Precompute frequently used matrices
+#     X0_X0T = [X0[i] @ X0[i].T for i in range(n)]
+#
+#     for i in range(n):
+#         for j in range(n):
+#             A = X0_X0T[i] @ U_array[j]
+#             # Efficient SVD
+#
+#             if require_grad:
+#                 U_A, s_A, VT_A = np.linalg.svd(A, full_matrices=False, compute_uv=True)
+#                 chordal_gradients[i][j] = -2 * s_A[0] * np.outer(U_A[:, 0], VT_A[0, :])
+#             else:
+#                 s_A = np.linalg.svd(A, full_matrices=False, compute_uv=False)
+#
+#             chordal_dist[i, j] = 1 - s_A[0]**2
+#
+#     return chordal_dist, chordal_gradients
+
+
+import numpy as np
+from multiprocessing import Pool
+
+# Top-level worker function
+def compute_chordal_distances_worker(args):
+    X0_X0T, U_array, i, j, require_grad = args
+    A = X0_X0T[i] @ U_array[j]
+    gradient = None
+
+    if require_grad:
+        U_A, s_A, VT_A = np.linalg.svd(A, full_matrices=False, compute_uv=True)
+        gradient = -2 * s_A[0] * np.outer(U_A[:, 0], VT_A[0, :])
+    else:
+        s_A = np.linalg.svd(A, full_matrices=False, compute_uv=False)
+
+    distance = 1 - s_A[0]**2
+    return i, j, distance, gradient
+
+def compute_chordal_distances(X0, U_array, require_grad=False, multiprocessing = False):
     n = len(U_array)
     chordal_dist = np.zeros((n, n))
     chordal_gradients = np.empty((n, n), dtype=object) if require_grad else None
-
-    # Precompute frequently used matrices
     X0_X0T = [X0[i] @ X0[i].T for i in range(n)]
 
-    for i in range(n):
-        for j in range(n):
-            A = X0_X0T[i] @ U_array[j]
-            # Efficient SVD
+    if multiprocessing:
+        # Setting up multiprocessing
+        with Pool() as pool:
+            results = pool.map(compute_chordal_distances_worker, [(X0_X0T, U_array, i, j, require_grad) for i in range(n) for j in range(n)])
 
+        for i, j, distance, gradient in results:
+            chordal_dist[i, j] = distance
             if require_grad:
-                U_A, s_A, VT_A = np.linalg.svd(A, full_matrices=False, compute_uv=True)
-                chordal_gradients[i][j] = -2 * s_A[0] * np.outer(U_A[:, 0], VT_A[0, :])
-            else:
-                s_A = np.linalg.svd(A, full_matrices=False, compute_uv=False)
+                chordal_gradients[i][j] = gradient
 
-            chordal_dist[i, j] = 1 - s_A[0]**2
+    else:
+        for i in range(n):
+            for j in range(n):
+                A = X0_X0T[i] @ U_array[j]
+                # Efficient SVD
+
+                if require_grad:
+                    U_A, s_A, VT_A = np.linalg.svd(A, full_matrices=False, compute_uv=True)
+                    chordal_gradients[i][j] = -2 * s_A[0] * np.outer(U_A[:, 0], VT_A[0, :])
+                else:
+                    s_A = np.linalg.svd(A, full_matrices=False, compute_uv=False)
+
+                chordal_dist[i, j] = 1 - s_A[0]**2
 
     return chordal_dist, chordal_gradients
+
+
 
 
 def compute_weights(chordal_dist, weight_factor, chordal_gradients = None, require_grad=False):
@@ -41,7 +94,7 @@ def compute_weights(chordal_dist, weight_factor, chordal_gradients = None, requi
 
 
 
-def compute_geodesic_distances(U_array, require_grad=False):
+def compute_geodesic_distances(U_array, require_grad=False, multiprocessing = False):
     n, m, r = len(U_array), U_array[0].shape[0], U_array[0].shape[1]
     U_jT_U_j = [U @ U.T for U in U_array]  # Precompute U_j^T U_j
     geodesic_distances = np.zeros((n, n))

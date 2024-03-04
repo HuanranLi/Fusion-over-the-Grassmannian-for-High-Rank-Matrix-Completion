@@ -15,6 +15,11 @@ from sklearn import metrics
 from helper_functions import *
 from distances import *
 from MNIST import *
+from Hopkins155 import *
+
+import os
+from multiprocessing import Pool
+
 
 
 
@@ -43,15 +48,24 @@ def check_clustering_acc(instance, labels, check_per_iter, num_cluster):
 
 
 
-
-
 def main(args, run_idx = 0):
+
+    if args.multiprocessing:
+        # Get the number of available CPUs
+        num_cpus = os.cpu_count()
+        print(f"Number of available CPUs: {num_cpus}")
+
+        # Use this number for the Pool
+        with Pool() as pool:
+            print(f"Number of worker processes in the pool: {pool._processes}")
+            # ... rest of your code
+
+
     # Logging the hyperparams
     run_name = args.run_name if args.run_name else f'run_{run_idx}'
     mlf_logger = MLFlowLogger(experiment_name=args.experiment_name, run_name = run_name, save_dir = '../logs')
     mlf_logger.log_hyperparams(args)
     callbacks = []
-
     K = args.num_cluster
 
     if args.dataset ==  'Synthetic':
@@ -70,7 +84,17 @@ def main(args, run_idx = 0):
 
         r = 3
         m, n = X.shape
+    elif args.dataset == 'Hopkins155':
+        print('Warning: Hopkins155 is used! args.num_cluster, args.samples_per_class is not used in this case. Please check hyperparam m,n,K for the actual shape of data.')
+        # Usage example:
+        hopkins_path = '../datasets/Hopkins155'
+        # x_processed, s_array = process_mat_data(os.path.join(hopkins_path, trail_name, trail_name + "_truth.mat"))
+        X, labels = process_hopkins_sequence(hopkins_path, index = args.Hopkins_index if args.Hopkins_index else run_idx)
+        X_omega, Omega = random_sampling(X, args.missing_rate)
 
+        r = 3
+        m, n = X.shape
+        K = len(set(labels))
     else:
         raise ValueError(f"dataset {dataset} is not implemented!")
 
@@ -97,7 +121,7 @@ def main(args, run_idx = 0):
                             callbacks = callbacks)
 
 
-    GF.train(max_iter = args.max_iter, step_size = args.step_size, logger = mlf_logger, step_method = args.step_method)
+    GF.train(max_iter = args.max_iter, step_size = args.step_size, logger = mlf_logger, step_method = args.step_method, multiprocessing = args.multiprocessing)
     d_matrix = GF.distance_matrix()
     similarity_matrix = convert_distance_to_similarity(d_matrix)
     pred_labels, metrics = spectral_clustering(similarity_matrix, K, labels)
@@ -109,6 +133,7 @@ def main(args, run_idx = 0):
 
 
 if __name__ == '__main__':
+    # freeze_support()
     print('Starting Main')
 
     # Create the parser
@@ -129,6 +154,10 @@ if __name__ == '__main__':
     parser.add_argument('--distance_to_truth', action='store_true', default=False)
     parser.add_argument("--samples_per_class", type=int, default=50, help="Number of images per class")
     parser.add_argument('--check_acc_per_iter', type=int, default=None, help='Check clustering accuracy per x iterations')
+
+    parser.add_argument('--multiprocessing', action='store_true', default=False)
+
+    parser.add_argument('--Hopkins_index', type=int, help='index of which sub-data is seleted to be run.')
 
 
 
