@@ -19,6 +19,7 @@ from Hopkins155 import *
 
 import os
 from multiprocessing import Pool
+from SSC import *
 
 
 
@@ -108,22 +109,26 @@ def main(args, run_idx = 0):
     mlf_logger.log_hyperparams({'m':m, 'n':n, 'r':r, 'K': K})
     print('Paramter: lambda = ',args.lambda_in,', K = ',K,', m = ', m, ', n = ',n,', r = ',r,', missing_rate =', args.missing_rate)
 
-    #object init
-    GF = GrassmannianFusion(X = X_omega,
-                            Omega = Omega,
-                            r = r,
-                            lamb = args.lambda_in,
-                            g_threshold= 1e-6,
-                            bound_zero = 1e-10,
-                            singular_value_bound = 1e-5,
-                            g_column_norm_bound = 1e-5,
-                            U_manifold_bound = 1e-5,
-                            callbacks = callbacks)
+    if args.method == 'GF':
+        #object init
+        GF = GrassmannianFusion(X = X_omega,
+                                Omega = Omega,
+                                r = r,
+                                lamb = args.lambda_in,
+                                g_threshold= 1e-6,
+                                bound_zero = 1e-10,
+                                singular_value_bound = 1e-5,
+                                g_column_norm_bound = 1e-5,
+                                U_manifold_bound = 1e-5,
+                                callbacks = callbacks)
 
 
-    GF.train(max_iter = args.max_iter, step_size = args.step_size, logger = mlf_logger, step_method = args.step_method, multiprocessing = args.multiprocessing)
-    d_matrix = GF.distance_matrix()
-    similarity_matrix = convert_distance_to_similarity(d_matrix)
+        GF.train(max_iter = args.max_iter, step_size = args.step_size, logger = mlf_logger, step_method = args.step_method, multiprocessing = args.multiprocessing)
+        d_matrix = GF.distance_matrix()
+        similarity_matrix = convert_distance_to_similarity(d_matrix)
+    elif args.method == 'ZF_SSC':
+        similarity_matrix = zf_ssc(X_omega, Omega)
+
     pred_labels, metrics = spectral_clustering(similarity_matrix, K, labels)
 
     print(metrics)
@@ -138,6 +143,8 @@ if __name__ == '__main__':
 
     # Create the parser
     parser = argparse.ArgumentParser(description='Parameter settings for training')
+
+    parser.add_argument('--method', type=str, default='GF', help='name of the method')
 
     # Add arguments
     parser.add_argument('--experiment_name', type=str, default='test', help='experiment_name')
