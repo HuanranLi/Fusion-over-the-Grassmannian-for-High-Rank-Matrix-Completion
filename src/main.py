@@ -127,7 +127,7 @@ def main(args, run_idx = 0):
         d_matrix = GF.distance_matrix()
         similarity_matrix = convert_distance_to_similarity(d_matrix)
     elif args.method == 'ZF_SSC':
-        similarity_matrix = zf_ssc(X_omega, Omega)
+        similarity_matrix = zf_ssc(X_omega, Omega, lambda_val = args.lambda_in)
 
     pred_labels, metrics = spectral_clustering(similarity_matrix, K, labels)
 
