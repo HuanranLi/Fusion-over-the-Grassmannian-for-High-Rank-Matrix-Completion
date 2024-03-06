@@ -24,8 +24,8 @@ import numpy as np
 #     return chordal_dist, chordal_gradients
 
 
-import numpy as np
-from multiprocessing import Pool
+# import numpy as np
+# from multiprocessing import Pool
 
 # Top-level worker function
 def compute_chordal_distances_worker(args):
@@ -49,14 +49,15 @@ def compute_chordal_distances(X0, U_array, require_grad=False, multiprocessing =
     X0_X0T = [X0[i] @ X0[i].T for i in range(n)]
 
     if multiprocessing:
-        # Setting up multiprocessing
-        with Pool() as pool:
-            results = pool.map(compute_chordal_distances_worker, [(X0_X0T, U_array, i, j, require_grad) for i in range(n) for j in range(n)])
-
-        for i, j, distance, gradient in results:
-            chordal_dist[i, j] = distance
-            if require_grad:
-                chordal_gradients[i][j] = gradient
+        # # Setting up multiprocessing
+        # with Pool() as pool:
+        #     results = pool.map(compute_chordal_distances_worker, [(X0_X0T, U_array, i, j, require_grad) for i in range(n) for j in range(n)])
+        #
+        # for i, j, distance, gradient in results:
+        #     chordal_dist[i, j] = distance
+        #     if require_grad:
+        #         chordal_gradients[i][j] = gradient
+        assert False
 
     else:
         for i in range(n):

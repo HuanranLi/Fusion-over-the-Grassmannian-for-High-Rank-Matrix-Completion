@@ -7,8 +7,6 @@ from itertools import permutations
 from scipy.optimize import linear_sum_assignment
 
 from sklearn.cluster import SpectralClustering
-from sklearn.cluster import KMeans
-from sklearn.cluster import DBSCAN
 from sklearn import metrics
 
 # def dUU(U_1, U_2, r):
