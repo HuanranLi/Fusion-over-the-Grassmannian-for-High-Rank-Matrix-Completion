@@ -85,12 +85,16 @@ def spectral_clustering(similarity_matrix, number_clusters, labels):
 
 def evaluate(predict, truth, cluster):
     predict = np.array(predict).astype(int)  # Convert to integer array
+
     truth = np.array(truth).astype(int)      # Convert to integer array
     assert predict.shape == truth.shape
 
     # Ensure all values are within the valid range
     assert np.all((predict >= 0) & (predict < cluster))
-    assert np.all((truth >= 0) & (truth < cluster))
+    if not np.all((truth >= 0) & (truth < cluster)):
+        print(truth)
+        print(cluster)
+        assert False
 
     # Create a confusion matrix
     C = np.zeros((cluster, cluster), dtype=int)

@@ -90,7 +90,7 @@ def main(args, run_idx = 0):
     if args.distance_to_truth:
         callbacks.append(lambda instance: distance_to_truth_callback(instance, true_subspaces, labels) )
     if args.check_acc_per_iter:
-        callbacks.append(lambda instance: check_clustering_acc(instance, labels,  args.check_acc_per_iter, args.num_cluster))
+        callbacks.append(lambda instance: check_clustering_acc(instance, labels,  args.check_acc_per_iter, K))
 
 
 

@@ -40,6 +40,11 @@ def process_mat_data(file_path):
     print("Shape of s:", s.shape)
     print("Number of Classes:", len(set(s)))
 
+    if not (max(s) < len(set(s)) and min(s) >=0):
+        print(s)
+        assert False
+
+
 
     return x_flattened_swapped, s
 
