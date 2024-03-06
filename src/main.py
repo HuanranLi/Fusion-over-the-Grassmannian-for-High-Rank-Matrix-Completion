@@ -123,7 +123,7 @@ def main(args, run_idx = 0):
     pred_labels, metrics = spectral_clustering(similarity_matrix, K, labels)
 
     print(metrics)
-    mlf_logger.log_metrics((metrics))
+    mlf_logger.log_metrics((metrics), step = args.max_iter)
     # plot_distance(d_matrix, labels, mlf_logger)
 
 
