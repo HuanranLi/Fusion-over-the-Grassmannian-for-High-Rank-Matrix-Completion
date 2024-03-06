@@ -3,7 +3,7 @@ from scipy.optimize import linear_sum_assignment as linear_assignment
 from sklearn.cluster import SpectralClustering
 from sklearn.linear_model import Lasso
 
-def solve_l1_optimization(data, lambda_val=1.0):
+def solve_l1_optimization(data, lambda_val):
     """
     Solve the L1-optimization problem for sparse representation.
 
@@ -90,3 +90,58 @@ def create_mask_from_indices(shape, indices):
 # n, m = data.shape
 # mask = create_mask_from_indices((n, m), observed_mask)
 # zero_filled_data = np.where(mask, data, 0)
+
+
+def solve_l1_optimization_with_mask(data, mask, lambda_val):
+    """
+    Solve the L1-optimization problem for sparse representation, considering only observed data.
+
+    :param data: Data matrix (each column is a data point)
+    :param mask: Boolean matrix indicating observed entries in 'data'
+    :param lambda_val: Regularization parameter for L1-norm
+    :return: Sparse coefficient matrix
+    """
+    num_points = data.shape[1]
+    coef_matrix = np.zeros((num_points, num_points))
+
+    for i in range(num_points):
+        # Mask for the current column
+        col_mask = mask[:, i]
+
+        # Create the optimization problem considering only observed data
+        A = np.concatenate([data[:, :i], data[:, i+1:]], axis=1)[col_mask, :]
+        b = data[col_mask, i]
+
+        # L1-optimization (Lasso)
+        clf = Lasso(alpha=lambda_val, fit_intercept=False)
+        clf.fit(A, b)
+
+        # Reconstruct the full coefficient vector
+        x_full = clf.coef_
+
+        # Insert the solution into the coefficient matrix
+        coef_matrix[i, :i] = x_full[:i]
+        coef_matrix[i, i+1:] = x_full[i:]
+
+    return coef_matrix
+
+def ewzf_ssc(data, observed_mask, lambda_val=1e-1):
+    """
+    Perform Zero-Filled Sparse Subspace Clustering (ZF-SSC).
+
+    :param data: Data matrix (each column is a data point)
+    :param observed_mask: Boolean matrix indicating observed data points
+    :param lambda_val: Regularization parameter for L1-norm in L1-optimization
+    :return: Affinity matrix
+    """
+    # Step 1: Apply observed mask - set unobserved values to zero
+    mask = create_mask_from_indices(data.shape, observed_mask)
+    zero_filled_data = np.where(mask, data, 0)
+
+    # Step 2: Sparse Representation
+    coef_matrix = solve_l1_optimization_with_mask(data, mask, lambda_val)
+
+    # Step 3: Construct Affinity Matrix
+    affinity_matrix = 0.5 * (np.abs(coef_matrix) + np.abs(coef_matrix.T))
+
+    return affinity_matrix

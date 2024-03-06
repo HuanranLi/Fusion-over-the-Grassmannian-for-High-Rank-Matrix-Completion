@@ -50,18 +50,6 @@ def check_clustering_acc(instance, labels, check_per_iter, num_cluster):
 
 
 def main(args, run_idx = 0):
-
-    if args.multiprocessing:
-        # Get the number of available CPUs
-        num_cpus = os.cpu_count()
-        print(f"Number of available CPUs: {num_cpus}")
-
-        # Use this number for the Pool
-        with Pool() as pool:
-            print(f"Number of worker processes in the pool: {pool._processes}")
-            # ... rest of your code
-
-
     # Logging the hyperparams
     run_name = args.run_name if args.run_name else f'run_{run_idx}'
     mlf_logger = MLFlowLogger(experiment_name=args.experiment_name, run_name = run_name, save_dir = '../logs')
@@ -128,6 +116,9 @@ def main(args, run_idx = 0):
         similarity_matrix = convert_distance_to_similarity(d_matrix)
     elif args.method == 'ZF_SSC':
         similarity_matrix = zf_ssc(X_omega, Omega, lambda_val = args.lambda_in)
+    elif args.method == "EWZF_SSC":
+        similarity_matrix = ewzf_ssc(X_omega, Omega, lambda_val = args.lambda_in)
+
 
     pred_labels, metrics = spectral_clustering(similarity_matrix, K, labels)
 
