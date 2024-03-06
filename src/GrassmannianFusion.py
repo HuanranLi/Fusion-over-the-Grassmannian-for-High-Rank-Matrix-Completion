@@ -181,6 +181,8 @@ class GrassmannianFusion:
             logger.log_metrics(({"training_loss": obj, "grad norm": gradient_norm}), step=iter)
             logger.log_metrics((objs_dict), step=iter)
 
+
+
             #print log
             if iter % 10 == 0:
                 print('iter', iter)
