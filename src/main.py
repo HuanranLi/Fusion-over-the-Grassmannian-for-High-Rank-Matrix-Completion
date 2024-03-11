@@ -20,32 +20,10 @@ from Hopkins155 import *
 import os
 # from multiprocessing import Pool
 from SSC import *
+from HSI import *
+from callbacks import *
 
 
-
-
-def convert_distance_to_similarity(d_matrix):
-    # Convert distance matrix to similarity matrix using Gaussian kernel
-    # The choice of gamma here is arbitrary; you might need to tune it for your specific case
-    gamma = 1.0
-    similarity_matrix = np.exp(-gamma * d_matrix ** 2)
-    return similarity_matrix
-
-
-def distance_to_truth_callback(instance, truth_subspaces, labels):
-    distances = np.mean([geodesic(U, truth_subspaces[labels[i]]) for i,U in enumerate(instance.U_array)])
-    instance.logger.log_metrics(({'distance_to_truth_mean': distances}), step=instance.iter)
-
-def check_clustering_acc(instance, labels, check_per_iter, num_cluster):
-    if instance.iter % check_per_iter != 0:
-        pass
-
-    d_matrix = instance.distance_matrix()
-    similarity_matrix = convert_distance_to_similarity(d_matrix)
-    pred_labels, metrics = spectral_clustering(similarity_matrix, num_cluster, labels)
-
-    # print(metrics)
-    instance.logger.log_metrics((metrics), step = instance.iter)
 
 
 
@@ -84,6 +62,16 @@ def main(args, run_idx = 0):
         r = 3
         m, n = X.shape
         K = len(set(labels))
+
+    elif args.dataset.startswith('HSI'):
+        dataset_idx = extract_index_from_hsi(args.dataset)
+
+        # Call the MNIST function
+        X, labels = load_sampled_hsi_data(dataset_idx, args.num_cluster, args.samples_per_class)
+        X_omega, Omega = random_sampling(X, args.missing_rate)
+
+        r = 3
+        m, n = X.shape
     else:
         raise ValueError(f"dataset {dataset} is not implemented!")
 

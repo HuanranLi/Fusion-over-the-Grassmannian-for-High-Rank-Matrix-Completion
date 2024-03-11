@@ -9,6 +9,15 @@ from scipy.optimize import linear_sum_assignment
 from sklearn.cluster import SpectralClustering
 from sklearn import metrics
 
+
+def convert_distance_to_similarity(d_matrix):
+    # Convert distance matrix to similarity matrix using Gaussian kernel
+    # The choice of gamma here is arbitrary; you might need to tune it for your specific case
+    gamma = 1.0
+    similarity_matrix = np.exp(-gamma * d_matrix ** 2)
+    return similarity_matrix
+
+
 # def dUU(U_1, U_2, r):
 #   u,s,vt = np.linalg.svd(U_1.T @ U_2)
 #
