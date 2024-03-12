@@ -105,15 +105,3 @@ def get_number_of_classes(dataset_idx):
     num_classes = len(np.unique(y_data))
 
     return num_classes
-
-
-
-# Example usage
-dataset_idx = 0  # For 'Indian_pines'
-num_classes = get_number_of_classes(dataset_idx)
-print(f'Number of classes in the dataset: {num_classes}')
-
-# Example usage
-num_classes = 5
-samples_per_class = 50
-X_sampled, y_sampled = load_sampled_hsi_data(1, num_classes, samples_per_class)
