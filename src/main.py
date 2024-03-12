@@ -22,8 +22,14 @@ import os
 from SSC import *
 from HSI import *
 from callbacks import *
+import re
 
-
+def extract_index_from_prefix(input_string, prefix):
+    match = re.search(rf'{prefix}(\d+)', input_string)
+    if match:
+        return int(match.group(1))
+    else:
+        raise ValueError("No valid index found in the input string")
 
 
 
@@ -51,12 +57,16 @@ def main(args, run_idx = 0):
 
         r = 3
         m, n = X.shape
-    elif args.dataset == 'Hopkins155':
+    elif args.dataset.startswith('Hopkins155'):
         print('Warning: Hopkins155 is used! args.num_cluster, args.samples_per_class is not used in this case. Please check hyperparam m,n,K for the actual shape of data.')
         # Usage example:
+
+        dataset_idx = extract_index_from_prefix(args.dataset, 'Hopkins155_')
+        print('Current Dataset Index:', dataset_idx)
+
         hopkins_path = '../datasets/Hopkins155'
         # x_processed, s_array = process_mat_data(os.path.join(hopkins_path, trail_name, trail_name + "_truth.mat"))
-        X, labels = process_hopkins_sequence(hopkins_path, index = args.Hopkins_index if args.Hopkins_index else run_idx)
+        X, labels = process_hopkins_sequence(hopkins_path, index = dataset_idx)
         X_omega, Omega = random_sampling(X, args.missing_rate)
 
         r = 3
@@ -64,7 +74,8 @@ def main(args, run_idx = 0):
         K = len(set(labels))
 
     elif args.dataset.startswith('HSI'):
-        dataset_idx = extract_index_from_hsi(args.dataset)
+        dataset_idx = extract_index_from_prefix(args.dataset, 'HSI_')
+        print('Current Dataset Index:', dataset_idx)
 
         # Call the MNIST function
         X, labels = load_sampled_hsi_data(dataset_idx, args.num_cluster, args.samples_per_class)
@@ -143,7 +154,6 @@ if __name__ == '__main__':
 
     parser.add_argument('--multiprocessing', action='store_true', default=False)
 
-    parser.add_argument('--Hopkins_index', type=int, help='index of which sub-data is seleted to be run.')
 
 
 

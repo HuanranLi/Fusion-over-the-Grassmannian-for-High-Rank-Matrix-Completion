@@ -107,12 +107,6 @@ def get_number_of_classes(dataset_idx):
     return num_classes
 
 
-def extract_index_from_hsi(input_string):
-    match = re.search(r'HSI_(\d+)', input_string)
-    if match:
-        return int(match.group(1))
-    else:
-        raise ValueError("No valid index found in the input string")
 
 # Example usage
 dataset_idx = 0  # For 'Indian_pines'
