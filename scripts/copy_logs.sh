@@ -2,7 +2,7 @@
 
 # Remote SSH credentials
 USER="hli488"
-HOST="submit1.chtc.wisc.edu"
+HOST="ap2001.chtc.wisc.edu"
 REMOTE_DIR=$1
 LOCAL_DIR="../logs"
 HOME_DIR=".."
