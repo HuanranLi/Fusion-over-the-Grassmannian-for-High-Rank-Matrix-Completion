@@ -32,6 +32,25 @@ def extract_index_from_prefix(input_string, prefix):
         raise ValueError("No valid index found in the input string")
 
 
+def save_input(logger, args, X, Omega, labels, rank):
+    # Assuming mlf_logger is your MLFlowLogger instance
+    log_dir = logger.save_dir
+    experiment_id = logger.experiment_id  # Or the appropriate method/attribute to get the experiment ID
+    run_id = logger.run_id
+
+    # Assuming log_dir is a variable that contains the path to your log directory
+    artifact_path = os.path.join(log_dir, experiment_id, run_id, "artifacts")
+
+    # Check if the path exists
+    if not os.path.exists(artifact_path):
+        print("Artifact path does not exist:", artifact_path)
+        raise ValueError()
+
+    saving_file_path = os.path.join(artifact_path, f"DataInput")
+    np.savez_compressed(saving_file_path, X = X, Omega = Omega, labels = labels, rank = rank)
+
+    print('Successfully save Input data to: ',saving_file_path)
+
 
 def main(args, run_idx = 0):
     # Logging the hyperparams
@@ -49,6 +68,7 @@ def main(args, run_idx = 0):
         n = args.samples_per_class * args.num_cluster #100-300
         r = 5 #3-5
         X_omega, labels, Omega, info = initialize_X_with_missing(m,n,r,K,args.missing_rate)
+        X = info['X']
         true_subspaces = info['X_lowRank_array']
     elif args.dataset == 'MNIST':
         # Randomly select class indices
@@ -89,11 +109,15 @@ def main(args, run_idx = 0):
     else:
         raise ValueError(f"dataset {dataset} is not implemented!")
 
+
+
+
     if args.distance_to_truth:
+        save_input(mlf_logger, args, X, Omega, labels, r)
         callbacks.append(lambda instance: distance_to_truth_callback(instance, true_subspaces, labels) )
     if args.check_acc_per_iter:
+        save_input(mlf_logger, args, X, Omega, labels, r)
         callbacks.append(lambda instance: check_clustering_acc(instance, labels,  args.check_acc_per_iter, K))
-
 
 
     mlf_logger.log_hyperparams({'m':m, 'n':n, 'r':r, 'K': K})
@@ -154,7 +178,6 @@ if __name__ == '__main__':
     parser.add_argument('--distance_to_truth', action='store_true', default=False)
     parser.add_argument("--samples_per_class", type=int, default=50, help="Number of images per class")
     parser.add_argument('--check_acc_per_iter', type=int, default=None, help='Check clustering accuracy per x iterations')
-
     parser.add_argument('--multiprocessing', action='store_true', default=False)
 
 
