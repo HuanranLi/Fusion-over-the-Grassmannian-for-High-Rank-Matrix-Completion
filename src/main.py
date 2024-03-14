@@ -47,7 +47,7 @@ def main(args, run_idx = 0):
     if args.dataset ==  'Synthetic':
         m = 100 #100-300
         n = args.samples_per_class * args.num_cluster #100-300
-        r = 3 #3-5
+        r = 5 #3-5
         X_omega, labels, Omega, info = initialize_X_with_missing(m,n,r,K,args.missing_rate)
         true_subspaces = info['X_lowRank_array']
     elif args.dataset == 'MNIST':
