@@ -35,8 +35,11 @@ def extract_index_from_prefix(input_string, prefix):
 
 def main(args, run_idx = 0):
     # Logging the hyperparams
+    log_dir = '../logs'
     run_name = args.run_name if args.run_name else f'run_{run_idx}'
-    mlf_logger = MLFlowLogger(experiment_name=args.experiment_name, run_name = run_name, save_dir = '../logs')
+    mlf_logger = MLFlowLogger(experiment_name=args.experiment_name, run_name = run_name, save_dir = log_dir)
+
+
     mlf_logger.log_hyperparams(args)
     callbacks = []
     K = args.num_cluster

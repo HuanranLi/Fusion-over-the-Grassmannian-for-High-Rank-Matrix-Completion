@@ -41,6 +41,7 @@ class GrassmannianFusion:
         print('Successfully save to: ' + path )
         return True
 
+
     def load_model(path):
         #rebuild the object
         data = np.load(path)
