@@ -54,6 +54,15 @@ def merge_experiments(base_dir, exp_name):
                 continue
 
             dest_path = os.path.join(main_folder_path, sub_folder)
+            # Check if the destination path exists
+            if os.path.exists(dest_path):
+                # Remove the file or directory at the destination path
+                if os.path.isfile(dest_path):
+                    os.remove(dest_path)
+                else:  # it's a directory
+                    shutil.rmtree(dest_path)
+
+            # Move the subfolder to the destination path
             shutil.move(sub_folder_path, dest_path)
             print(f"Moved '{sub_folder_path}' to '{dest_path}'")
             sub_folders_moved = True
