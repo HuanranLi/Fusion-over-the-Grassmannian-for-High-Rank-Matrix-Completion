@@ -6,7 +6,7 @@ cd ../src/
 # mr=$(expr $1 + 1)
 mr=$(expr \( $1 % 9 \) + 1 )
 idx=$(expr \( $1 / 9 \) % 5 )
-lambda=1e-4
+lambda=1e-3
 
 echo "MR:0.$mr"
 echo "HSI_idx:$idx"
