@@ -13,6 +13,6 @@ echo "HSI_idx:$idx"
 echo "lambda:$lambda"
 echo
 
-python main.py --lambda_in $lambda --missing_rate 0.$mr --step_method Regular --max_iter 12001 --step_size 1 --dataset HSI_$idx --experiment_name CHTC_HSI_12K_L{$lambda}_MR0.$mr --check_acc_per_iter 500 --num_cluster 2 --samples_per_class 50
+python main.py --lambda_in $lambda --missing_rate 0.$mr --step_method Regular --max_iter 5001 --step_size 1 --dataset HSI_$idx --experiment_name CHTC_HSI_5K_L{$lambda}_MR0.$mr --check_acc_per_iter 500 --num_cluster 2 --samples_per_class 50
 
 cd ../scripts
