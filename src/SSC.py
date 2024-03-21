@@ -20,7 +20,7 @@ def solve_l1_optimization(data, lambda_val):
         b = data[:, i]
 
         # L1-optimization (Lasso)
-        clf = Lasso(alpha=lambda_val, fit_intercept=False, max_iter=10000)
+        clf = Lasso(alpha=lambda_val, fit_intercept=False)
         clf.fit(A, b)
         x = clf.coef_
 
