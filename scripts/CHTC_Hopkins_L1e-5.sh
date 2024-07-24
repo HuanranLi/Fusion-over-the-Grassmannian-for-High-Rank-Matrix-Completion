@@ -4,9 +4,9 @@ cd ../src/
 
 # Calculate the expression
 # mr=$(expr $1 + 1)
-mr=$(expr \( $1 % 6 \) )
-idx=$(expr $1 / 6)
-lambda=1e-4
+mr=$(expr \( $1 % 10 \) )
+idx=$(expr $1 / 10)
+lambda=1e-5
 
 echo "MR:0.$mr"
 echo "Hopkins_index:$idx"
