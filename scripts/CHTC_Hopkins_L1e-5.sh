@@ -4,8 +4,8 @@ cd ../src/
 
 # Calculate the expression
 # mr=$(expr $1 + 1)
-mr=$(expr \( $1 % 10 \) )
-idx=$(expr $1 / 10)
+mr=$(expr \( $1 % 4 + 6 \) )
+idx=$(expr $1 / 4)
 lambda=1e-5
 
 echo "MR:0.$mr"
