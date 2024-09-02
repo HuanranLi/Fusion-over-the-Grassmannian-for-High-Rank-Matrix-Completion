@@ -29,8 +29,8 @@ For more details, refer to the [published paper](https://ieeexplore.ieee.org/abs
 To get started, clone the repository and install the required dependencies:
 
 ```bash
-git clone https://github.com/yourusername/GrassmannianFusionClustering.git
-cd GrassmannianFusionClustering
+git clone https://github.com/HuanranLi/Fusion-over-the-Grassmannian-for-High-Rank-Matrix-Completion.git
+cd Fusion-over-the-Grassmannian-for-High-Rank-Matrix-Completion
 pip install -r requirements.txt
 ```
 
