@@ -1,5 +1,6 @@
 *
 !src
+!src/*
 !.gitignore
 !datasets
 !README.md
