@@ -49,7 +49,7 @@ python main.py --method GF --experiment_name my_experiment --dataset MNIST --num
 Here are the primary command-line arguments you can use:
 
 - `--method`: Name of the method to use (`GF`, `ZF_SSC`, `EWZF_SSC`). Default is `GF`.
-- `--experiment_name`: Name of the experiment. . Default is `test`.
+- `--experiment_name`: Name of the experiment. Default is `test`.
 - `--run_name`: Specific run name (optional).
 - `--num_runs`: Number of runs to perform. Default is `1`.
 - `--step_method`: Method for step size adjustment (default: `Armijo`).
