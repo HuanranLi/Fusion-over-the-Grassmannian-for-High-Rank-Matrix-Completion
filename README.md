@@ -95,7 +95,3 @@ If you use this code in your research, please cite our paper:
   organization={IEEE}
 }
 ```
-
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
