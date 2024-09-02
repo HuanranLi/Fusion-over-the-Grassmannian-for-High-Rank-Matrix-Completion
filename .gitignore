@@ -1,2 +1,5 @@
-logs/*
-analysis/*
+*
+!src
+!.gitignore
+!datasets
+!README.md
